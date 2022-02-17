@@ -1,6 +1,7 @@
 - hosts: dev
   become: yes
   vars:
+    ansible_python_interpreter: /usr/bin/python3
     kubectl_v: 1.23.3
     kubectx_v: 0.9.4
     kubens_v: 0.9.4
