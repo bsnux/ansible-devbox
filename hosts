@@ -1,0 +1,6 @@
+[dev]
+your_host_here
+
+[dev:vars]
+# CentOS 7 still using Python 2 by default
+ansible_python_interpreter=/usr/bin/python3

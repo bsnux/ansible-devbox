@@ -1,0 +1,120 @@
+- hosts: dev
+  become: yes
+  vars:
+    kubectl_v: 1.23.3
+    kubectx_v: 0.9.4
+    kubens_v: 0.9.4
+    nvim_v: 0.6.1
+  tasks:
+    - name: EPEL repo
+      yum_repository:
+        name: epel
+        description: Extra Packages for Enterprise Linux 7
+        metalink: https://mirrors.fedoraproject.org/metalink?repo=epel-7&arch=$basearch&infra=$infra&content=$contentdir
+        gpgcheck: yes
+        gpgkey: https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7
+    - name: Docker repo
+      yum_repository:
+        name: docker
+        description: Docker CE Stable
+        baseurl: https://download.docker.com/linux/centos/7/$basearch/stable
+        enabled: 1
+        gpgcheck: 1
+        gpgkey: https://download.docker.com/linux/centos/gpg
+    - name: Hashicorp repo
+      yum_repository:
+        name: hashicorp
+        description: Hashicorp Stable
+        baseurl: https://rpm.releases.hashicorp.com/RHEL/$releasever/$basearch/stable
+        enabled: 1
+        gpgcheck: 1
+        gpgkey: https://rpm.releases.hashicorp.com/gpg
+    - name: Github CLI
+      yum_repository:
+        name: github-cli
+        description: packages for the GitHub CLI
+        baseurl: https://cli.github.com/packages/rpm
+        enabled: 1
+        gpgcheck: 1
+        gpgkey: https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xc99b11deb97541f0
+    - name: Install essential packages
+      yum:
+        name: "{{ packages }}"
+        state: present
+      vars:
+        packages:
+          - git
+          - gh
+          - curl
+          - tmux
+          - python3
+          - ack
+          - jq
+          - zsh
+          - docker-ce
+          - docker-ce-cli
+          - vault
+          - terraform
+          - fuse-libs
+          - ansible
+      tags:
+        - packages
+    - name: Install kubectl
+      shell: |
+        curl -LO https://dl.k8s.io/release/v{{ kubectl_v }}/bin/linux/amd64/kubectl
+        chmod +x kubectl
+        mv kubectl /usr/local/bin
+      tags:
+        - kubernetes
+    - name: Install kubectx
+      shell: |
+        curl -LO https://github.com/ahmetb/kubectx/releases/download/v{{ kubectx_v }}/kubectx_v{{ kubectx_v }}_linux_x86_64.tar.gz
+        tar -zxf kubectx_v{{ kubectx_v }}_linux_x86_64.tar.gz
+        chmod +x kubectx
+        mv kubectx /usr/local/bin
+      tags:
+        - kubernetes
+    - name: Install kubens
+      shell: |
+        curl -LO https://github.com/ahmetb/kubectx/releases/download/v{{ kubens_v }}/kubens_v{{ kubens_v }}_linux_x86_64.tar.gz
+        tar -zxf kubens_v{{ kubens_v }}_linux_x86_64.tar.gz
+        chmod +x kubens
+        mv kubens /usr/local/bin
+      tags:
+        - kubernetes
+    - name: Install NeoVim
+      shell: |
+        curl -LO https://github.com/neovim/neovim/releases/download/v{{ nvim_v }}/nvim.appimage
+        chmod +x nvim.appimage
+        mv nvim.appimage /usr/local/bin/nvim
+      tags:
+        - nvim
+    - name: Cloning NeoVim config
+      become: no
+      git:
+        repo: https://github.com/bsnux/nvim.git
+        dest: ~/github/bsnux/nvim
+      tags:
+        - nvim
+        - config
+    - name: NeoVim config
+      become: no
+      shell: |
+        if [ ! -d ~/.config/nvim ]
+        then
+          mkdir -p ~/.config/nvim
+          ln -s ~/github/bsnux/nvim/init.lua ~/.config/nvim/init.lua
+          ln -s ~/github/bsnux/nvim/snippets ~/.config/nvim/snippets
+        fi
+      tags:
+        - nvim
+        - config
+    - name: Install Python packages
+      pip:
+        executable: /usr/bin/pip3
+        name:
+          - ipython
+          - requests
+          - boto3
+      tags:
+        - python
