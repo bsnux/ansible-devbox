@@ -119,3 +119,11 @@
           - boto3
       tags:
         - python
+    - name: tmux config
+      become: no
+      template:
+        src: templates/tmux.conf.j2
+        dest: ~/.tmux.conf
+      tags:
+        - tmux
+
